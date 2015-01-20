@@ -35,4 +35,24 @@ RSpec.describe do
   it "fails if command is empty" do
     expect { @clazz.process('') }.to raise_error('command must not be empty')
   end
+
+  describe "options" do
+    describe ":puts_output" do
+      describe "== true" do
+        it "puts output to stdout" do
+          expect do
+            @clazz.process('echo stdout > /dev/stdout', puts_output: true)
+          end.to output("stdout\n").to_stdout
+        end
+      end
+
+      describe "== false" do
+        it "suppresses stdout" do
+          expect do
+            @clazz.process('echo stdout > /dev/stdout', puts_output: false)
+          end.to_not output("stdout\n").to_stdout
+        end
+      end
+    end
+  end
 end
