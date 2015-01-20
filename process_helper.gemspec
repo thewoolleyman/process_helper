@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.}
   spec.description   = %q{Wrapper around Open3#popen2e with other useful options.}
   spec.homepage      = "https://github.com/oppegard/process_helper"
-  spec.license       = "MIT"
+  spec.license       = "Unlicense"
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
