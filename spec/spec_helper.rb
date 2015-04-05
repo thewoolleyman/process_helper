@@ -11,3 +11,8 @@ RSpec::Matchers.define_negated_matcher :not_output, :output
 # module SpecHelper
 # end
 # include SpecHelper
+
+# Dummy fixture class
+class Clazz
+  include ProcessHelper
+end
