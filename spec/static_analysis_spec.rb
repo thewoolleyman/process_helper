@@ -6,12 +6,11 @@ describe 'static analysis checks' do
   it 'ruby-lint' do
     process(
       "ruby-lint #{File.expand_path('../../spec', __FILE__)}",
-      puts_output: false,
-      puts_output_only_on_exception: true
+      puts_output: :exception
     )
   end
 
   it 'rubocop' do
-    process('rubocop', puts_output: false, puts_output_only_on_exception: true)
+    process('rubocop', puts_output: :exception)
   end
 end
