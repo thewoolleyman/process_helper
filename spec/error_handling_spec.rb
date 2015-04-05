@@ -1,6 +1,6 @@
 require_relative 'spec_helper'
 
-RSpec.describe do
+RSpec.describe 'error handling' do
   attr_reader :clazz
 
   before do

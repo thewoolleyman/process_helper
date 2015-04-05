@@ -1,7 +1,7 @@
 require_relative 'spec_helper'
 
-RSpec.describe do
-  it 'has a version number' do
+RSpec.describe 'version' do
+  it 'is semantic' do
     expect(::ProcessHelper::VERSION).to match(/^\d\.\d\.\d\.*\w*$/)
   end
 end

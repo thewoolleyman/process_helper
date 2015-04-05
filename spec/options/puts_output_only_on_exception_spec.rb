@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-RSpec.describe do
+RSpec.describe ':puts_output_only_on_exception option' do
   attr_reader :clazz
 
   before do
