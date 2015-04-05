@@ -67,7 +67,7 @@ module ProcessHelper
 
   def puts_output_only_on_exception(options, output)
     return if options[:puts_output] == :always
-    puts output if options[:puts_output] == :exception
+    puts output if options[:puts_output] == :error
   end
 
   def options_processing(options)

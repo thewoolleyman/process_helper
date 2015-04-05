@@ -13,7 +13,7 @@ RSpec.describe ':include_output_in_exception option' do
         expect do
           clazz.process(
             'ls /does_not_exist',
-            puts_output: :exception,
+            puts_output: :error,
             include_output_in_exception: true
           )
         end.to raise_error(
@@ -26,7 +26,7 @@ RSpec.describe ':include_output_in_exception option' do
         expect do
           clazz.process(
             'echo stdout > /dev/stdout',
-            puts_output: :exception,
+            puts_output: :error,
             expected_exit_status: 1,
             include_output_in_exception: true)
         end.to raise_error(
@@ -43,7 +43,7 @@ RSpec.describe ':include_output_in_exception option' do
         expect do
           clazz.process(
             'ls /does_not_exist',
-            puts_output: :exception,
+            puts_output: :error,
             include_output_in_exception: false)
         end
           .to output(/No such file or directory/).to_stdout
@@ -60,7 +60,7 @@ RSpec.describe ':include_output_in_exception option' do
           clazz.process(
             'echo stdout > /dev/stdout',
             expected_exit_status: 1,
-            puts_output: :exception,
+            puts_output: :error,
             include_output_in_exception: false)
         end.to output("stdout\n").to_stdout
             .and(

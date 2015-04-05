@@ -21,7 +21,7 @@ RSpec.describe 'exit status handling' do
       it 'fails with message' do
         cmd_regex = Regexp.escape('`ls /does_not_exist`')
         expect do
-          clazz.process('ls /does_not_exist', puts_output: :exception)
+          clazz.process('ls /does_not_exist', puts_output: :error)
         end.to raise_error(
             ProcessHelper::UnexpectedExitStatusError,
             /Command failed, pid \d+ exit 1\. Command: #{cmd_regex}\./
@@ -39,7 +39,7 @@ RSpec.describe 'exit status handling' do
           "#{Regexp.escape('`echo`')}" \
           '\.'
         expect do
-          clazz.process('echo', expected_exit_status: 1, puts_output: :exception)
+          clazz.process('echo', expected_exit_status: 1, puts_output: :error)
         end.to raise_error(ProcessHelper::UnexpectedExitStatusError, /#{expected_regex}/)
             .and(output("\n").to_stdout)
       end
@@ -47,7 +47,7 @@ RSpec.describe 'exit status handling' do
     describe 'when exit_status != 0' do
       it 'succeeds' do
         expect do
-          clazz.process('ls /does_not_exist', expected_exit_status: 1, puts_output: :exception)
+          clazz.process('ls /does_not_exist', expected_exit_status: 1, puts_output: :error)
         end.to_not raise_error
       end
     end
