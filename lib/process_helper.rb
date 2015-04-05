@@ -1,7 +1,7 @@
-require 'process_helper/version'
-require 'process_helper/empty_command_error'
-require 'process_helper/invalid_options_error'
-require 'process_helper/unexpected_exit_status_error'
+require_relative 'process_helper/version'
+require_relative 'process_helper/empty_command_error'
+require_relative 'process_helper/invalid_options_error'
+require_relative 'process_helper/unexpected_exit_status_error'
 require 'open3'
 
 # Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
