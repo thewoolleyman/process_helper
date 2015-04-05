@@ -12,7 +12,9 @@ RSpec.describe ':puts_output_only_on_exception option' do
       it 'when :expected_exit_status is zero' do
         expect do
           clazz.process('ls /does_not_exist', puts_output_only_on_exception: true)
-        end.to raise_error(/Command failed/)
+        end.to raise_error(
+            ProcessHelper::UnexpectedExitStatusError,
+            /Command failed/)
             .and(output("ls: /does_not_exist: No such file or directory\n").to_stdout)
       end
 
@@ -22,7 +24,9 @@ RSpec.describe ':puts_output_only_on_exception option' do
             'echo stdout > /dev/stdout',
             expected_exit_status: 1,
             puts_output_only_on_exception: true)
-        end.to raise_error(/Command succeeded but was expected to fail/)
+        end.to raise_error(
+            ProcessHelper::UnexpectedExitStatusError,
+            /Command succeeded but was expected to fail/)
             .and(output("stdout\n").to_stdout)
       end
     end
@@ -36,7 +40,9 @@ RSpec.describe ':puts_output_only_on_exception option' do
             'ls /does_not_exist',
             puts_output: false,
             puts_output_only_on_exception: false)
-        end.to raise_error(/Command failed/)
+        end.to raise_error(
+            ProcessHelper::UnexpectedExitStatusError,
+            /Command failed/)
             .and(not_output.to_stdout)
       end
 
@@ -47,7 +53,9 @@ RSpec.describe ':puts_output_only_on_exception option' do
             expected_exit_status: 1,
             puts_output: false,
             puts_output_only_on_exception: false)
-        end.to raise_error(/Command succeeded but was expected to fail/)
+        end.to raise_error(
+            ProcessHelper::UnexpectedExitStatusError,
+            /Command succeeded but was expected to fail/)
             .and(not_output.to_stdout)
       end
     end
@@ -57,6 +65,7 @@ RSpec.describe ':puts_output_only_on_exception option' do
     expect do
       clazz.process('ls', puts_output: true, puts_output_only_on_exception: true)
     end.to raise_error(
+        ProcessHelper::InvalidOptionsError,
         "'puts_output' and 'puts_output_only_on_exception' options cannot both be true"
       )
 

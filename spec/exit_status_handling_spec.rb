@@ -21,6 +21,7 @@ RSpec.describe 'exit status handling' do
         expect do
           clazz.process('ls /does_not_exist', puts_output: false)
         end.to raise_error(
+            ProcessHelper::UnexpectedExitStatusError,
             /Command failed, pid \d+ exit 1\. Command: #{cmd_regex}\./
           )
       end
@@ -34,6 +35,7 @@ RSpec.describe 'exit status handling' do
         expect do
           clazz.process('echo', expected_exit_status: 1, puts_output: false)
         end.to raise_error(
+            ProcessHelper::UnexpectedExitStatusError,
             /Command succeeded but was expected to fail, pid \d+ exit 0 \(expected 1\). Command: #{Regexp.escape('`echo`')}\./
           )
       end

@@ -1,11 +1,14 @@
 require 'process_helper/version'
+require 'process_helper/empty_command_error'
+require 'process_helper/invalid_options_error'
+require 'process_helper/unexpected_exit_status_error'
 require 'open3'
 
 # Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
 module ProcessHelper
   def process(cmd, options = {})
     cmd = cmd.to_s
-    fail 'command must not be empty' if cmd.empty?
+    fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
     options = options.dup
     options_processing(options)
     Open3.popen2e(cmd) do |_, stdout_and_stderr, wait_thr|
@@ -37,16 +40,25 @@ module ProcessHelper
 
     exception_message = "Command #{result_msg}, #{exit_status}#{exit_status_msg}. " \
     "Command: `#{cmd}`."
-    if options[:puts_output_only_on_exception] == true && options[:puts_output] == false
-      puts output
+    if options[:include_output_in_exception]
+      exception_message += " Command Output: \"#{output}\""
     end
-    fail exception_message
+    puts_output_only_on_exception(options, output)
+    fail UnexpectedExitStatusError, exception_message
+  end
+
+  def puts_output_only_on_exception(options, output)
+    return unless options[:puts_output_only_on_exception] == true
+    return if options[:puts_output] != false
+    puts output
   end
 
   def options_processing(options)
     # rubocop:disable Style/GuardClause
     if options[:puts_output] && options[:puts_output_only_on_exception]
-      fail "'puts_output' and 'puts_output_only_on_exception' options cannot both be true"
+      fail(
+        InvalidOptionsError,
+        "'puts_output' and 'puts_output_only_on_exception' options cannot both be true")
     end
   end
 end

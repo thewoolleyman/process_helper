@@ -8,10 +8,14 @@ RSpec.describe 'error handling' do
   end
 
   it 'fails if command is nil' do
-    expect { clazz.process(nil) }.to raise_error('command must not be empty')
+    expect { clazz.process(nil) }.to raise_error(
+        ProcessHelper::EmptyCommandError,
+        'command must not be empty')
   end
 
   it 'fails if command is empty' do
-    expect { clazz.process('') }.to raise_error('command must not be empty')
+    expect { clazz.process('') }.to raise_error(
+        ProcessHelper::EmptyCommandError,
+        'command must not be empty')
   end
 end
