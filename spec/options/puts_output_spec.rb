@@ -55,7 +55,7 @@ RSpec.describe ':puts_output option' do
         expect do
           clazz.process(
             'ls /does_not_exist',
-            expected_exit_status: 1,
+            expected_exit_status: [1, 2],
             puts_output: :error)
         end.to not_output.to_stdout
             .and(not_output.to_stderr)

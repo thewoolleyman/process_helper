@@ -18,7 +18,7 @@ RSpec.describe ':include_output_in_exception option' do
           )
         end.to raise_error(
             ProcessHelper::UnexpectedExitStatusError,
-            /Command Output: "ls: \/does_not_exist: No such file or directory\n"/)
+            /Command Output: "ls:.*\/does_not_exist: No such file or directory\n"/)
             .and(output(/No such file or directory/).to_stdout)
       end
 
