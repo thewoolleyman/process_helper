@@ -1,6 +1,2 @@
 ---
-script: bundle exec rake
 sudo: false
-cache:
-  directories:
-  - vendor/bundle
