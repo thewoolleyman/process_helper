@@ -31,18 +31,12 @@ RSpec.describe 'options validation raises InvalidOptionError' do
         "Cannot specify both 'puts_output' and 'out'")
   end
 
-  it 'when integer param is passed non-integer' do
+  it 'when expected_exit_status param is passed non-integer or array without all integers' do
     expect do
       clazz.process('echo', expected_exit_status: '0')
     end.to raise_error(
         ProcessHelper::InvalidOptionsError,
-        "'expected_exit_status','exp_st' options must be an Integer")
-
-    expect do
-      clazz.process('echo', exp_st: '0')
-    end.to raise_error(
-        ProcessHelper::InvalidOptionsError,
-        "'expected_exit_status','exp_st' options must be an Integer")
+        "'expected_exit_status','exp_st' options must be an Integer or an array of Integers")
   end
 
   it 'when boolean param is passed non-boolean' do
@@ -59,5 +53,13 @@ RSpec.describe 'options validation raises InvalidOptionError' do
     end.to raise_error(
         ProcessHelper::InvalidOptionsError,
         "'puts_output','out' options must be one of the following: :always, :error, :never")
+  end
+
+  it 'when passed a short option' do
+    expect do
+      clazz.process('echo', exp_st: '0')
+    end.to raise_error(
+        ProcessHelper::InvalidOptionsError,
+        "'expected_exit_status','exp_st' options must be an Integer or an array of Integers")
   end
 end

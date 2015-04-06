@@ -53,7 +53,7 @@ RSpec.describe 'output handling' do
           clazz.process(
             'echo stdout > /dev/stdout',
             puts_output: :never)
-        end.to output(/unless process fails with an exit code other than 0/).to_stderr
+        end.to output(/unless process fails with an exit code other than \[0\]/).to_stderr
             .and(not_output.to_stdout)
       end
     end

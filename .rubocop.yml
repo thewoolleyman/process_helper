@@ -7,6 +7,9 @@ Metrics/MethodLength:
   CountComments: false  # count full line comments?
   Max: 20
 
+Style/CaseIndentation:
+  IndentOneStep: true
+
 Style/FirstParameterIndentation:
   Enabled: false
 

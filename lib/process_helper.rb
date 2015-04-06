@@ -44,25 +44,32 @@ module ProcessHelper
   end
 
   def handle_exit_status(cmd, options, output, wait_thr)
-    expected_exit_status = options[:expected_exit_status] || 0
+    expected_exit_status = options[:expected_exit_status]
     exit_status = wait_thr.value
-    return if exit_status.exitstatus == expected_exit_status
+    return if expected_exit_status.include?(exit_status.exitstatus)
 
-    if expected_exit_status == 0
-      result_msg = 'failed'
-      exit_status_msg = ''
-    else
-      result_msg = 'succeeded but was expected to fail'
-      exit_status_msg = " (expected #{expected_exit_status})"
-    end
-
-    exception_message = "Command #{result_msg}, #{exit_status}#{exit_status_msg}. " \
-    "Command: `#{cmd}`."
+    exception_message = create_exception_message(cmd, exit_status, expected_exit_status)
     if options[:include_output_in_exception]
       exception_message += " Command Output: \"#{output}\""
     end
     puts_output_only_on_exception(options, output)
     fail UnexpectedExitStatusError, exception_message
+  end
+
+  def create_exception_message(cmd, exit_status, expected_exit_status)
+    if expected_exit_status == [0]
+      result_msg = 'failed'
+      exit_status_msg = ''
+    elsif !expected_exit_status.include?(0)
+      result_msg = 'succeeded but was expected to fail'
+      exit_status_msg = " (expected #{expected_exit_status})"
+    else
+      result_msg = 'did not exit with one of the expected exit statuses'
+      exit_status_msg = " (expected #{expected_exit_status})"
+    end
+
+    "Command #{result_msg}, #{exit_status}#{exit_status_msg}. " \
+      "Command: `#{cmd}`."
   end
 
   def puts_output_only_on_exception(options, output)
@@ -75,6 +82,7 @@ module ProcessHelper
     convert_short_options(options)
     set_option_defaults(options)
     validate_option_values(options)
+    convert_scalar_expected_exit_status_to_array(options)
     warn_if_output_may_be_suppressed_on_error(options)
   end
 
@@ -82,7 +90,7 @@ module ProcessHelper
   def set_option_defaults(options)
     options[:puts_output] = :always if options[:puts_output].nil?
     options[:include_output_in_exception] = true if options[:include_output_in_exception].nil?
-    options[:expected_exit_status] = 0 if options[:expected_exit_status].nil?
+    options[:expected_exit_status] = [0] if options[:expected_exit_status].nil?
   end
 
   def valid_option_pairs
@@ -139,10 +147,20 @@ module ProcessHelper
   end
 
   def validate_integer(pair, value)
+    valid =
+      case
+        when value.is_a?(Integer)
+          true
+        when value.is_a?(Array) && value.all? { |v| v.is_a?(Integer) }
+          true
+        else
+          false
+      end
+
     fail(
       ProcessHelper::InvalidOptionsError,
-      "#{quote_and_join_pair(pair)} options must be an Integer"
-    ) unless value.is_a?(Integer)
+      "#{quote_and_join_pair(pair)} options must be an Integer or an array of Integers"
+    ) unless valid
   end
 
   def validate_boolean(pair, value)
@@ -163,5 +181,11 @@ module ProcessHelper
 
   def quote_and_join_pair(pair)
     pair.map { |o| "'#{o}'" }.join(',')
+  end
+
+  def convert_scalar_expected_exit_status_to_array(options)
+    return if options[:expected_exit_status].is_a?(Array)
+    options[:expected_exit_status] =
+      [options[:expected_exit_status]]
   end
 end
