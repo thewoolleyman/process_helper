@@ -133,6 +133,7 @@ module ProcessHelper
         next unless option == long_option_name
         validate_integer(pair, value) if option.to_s == 'expected_exit_status'
         validate_boolean(pair, value) if option.to_s == 'include_output_in_exception'
+        validate_puts_output(pair, value) if option.to_s == 'puts_output'
       end
     end
   end
@@ -149,6 +150,15 @@ module ProcessHelper
       ProcessHelper::InvalidOptionsError,
       "#{quote_and_join_pair(pair)} options must be a boolean"
     ) unless value == true || value == false
+  end
+
+  def validate_puts_output(pair, value)
+    valid_values = [:always, :error, :never]
+    fail(
+      ProcessHelper::InvalidOptionsError,
+      "#{quote_and_join_pair(pair)} options must be one of the following: " +
+        valid_values.map { |v| ":#{v}" }.join(', ')
+    ) unless valid_values.include?(value)
   end
 
   def quote_and_join_pair(pair)

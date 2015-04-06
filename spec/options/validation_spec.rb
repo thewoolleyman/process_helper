@@ -52,4 +52,12 @@ RSpec.describe 'options validation raises InvalidOptionError' do
         ProcessHelper::InvalidOptionsError,
         "'include_output_in_exception','out_ex' options must be a boolean")
   end
+
+  it 'when puts_output param is passed invalid value' do
+    expect do
+      clazz.process('echo', puts_output: :invalid)
+    end.to raise_error(
+        ProcessHelper::InvalidOptionsError,
+        "'puts_output','out' options must be one of the following: :always, :error, :never")
+  end
 end
