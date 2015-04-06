@@ -150,4 +150,6 @@ ProcessHelper::VERSION
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
+5. If you are awesome, use `git rebase --interactive` to ensure
+   you have a single atomic commit on your branch.
+6. Create a new Pull Request
