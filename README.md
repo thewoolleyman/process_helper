@@ -1,3 +1,7 @@
+[![Travis-CI Build Status](https://travis-ci.org/thewoolleyman/process_helper.svg?branch=master)](https://travis-ci.org/thewoolleyman/process_helper)
+
+[Pivotal Tracker Project](https://www.pivotaltracker.com/n/projects/1117814)
+
 # process_helper
 
 Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
@@ -44,10 +48,6 @@ process('echo "Hello"')
 
 By default, ProcessHelper will output any STDERR or STDOUT output to STDOUT, and also
 return it as the result of the `#process` method:
-
-## Pivotal Tracker Project
-
-https://www.pivotaltracker.com/n/projects/1117814
 
 ## Contributing
 
