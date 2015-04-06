@@ -18,7 +18,7 @@ RSpec.describe ':expected_exit_status option' do
 
       it 'succeeds when :expected_exit_status is explicitly 0' do
         expect do
-          clazz.process('echo', expected_exit_status: 0)
+          clazz.process('echo', exp_st: 0)
         end.to not_raise_error
             .and(output("\n").to_stdout)
       end
@@ -47,7 +47,7 @@ RSpec.describe ':expected_exit_status option' do
           "#{Regexp.escape('`echo`')}" \
           '\.'
         expect do
-          clazz.process('echo', expected_exit_status: 1, puts_output: :error)
+          clazz.process('echo', exp_st: 1, puts_output: :error)
         end.to raise_error(ProcessHelper::UnexpectedExitStatusError, /#{expected_regex}/)
             .and(output("\n").to_stdout)
       end
@@ -56,9 +56,16 @@ RSpec.describe ':expected_exit_status option' do
     describe 'when exit_status != 0' do
       it 'succeeds' do
         expect do
-          clazz.process('ls /does_not_exist', expected_exit_status: 1, puts_output: :error)
+          clazz.process('ls /does_not_exist', exp_st: 1, puts_output: :error)
         end.to_not raise_error
       end
     end
+  end
+
+  it 'supports long form of option' do
+    expect do
+      clazz.process('echo', expected_exit_status: 0)
+    end.to not_raise_error
+        .and(output("\n").to_stdout)
   end
 end

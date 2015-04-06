@@ -71,7 +71,10 @@ module ProcessHelper
   end
 
   def options_processing(options)
+    validate_long_vs_short_option_uniqueness(options)
+    convert_short_options(options)
     set_option_defaults(options)
+    validate_option_values(options)
     warn_if_output_may_be_suppressed_on_error(options)
   end
 
@@ -80,5 +83,75 @@ module ProcessHelper
     options[:puts_output] = :always if options[:puts_output].nil?
     options[:include_output_in_exception] = true if options[:include_output_in_exception].nil?
     options[:expected_exit_status] = 0 if options[:expected_exit_status].nil?
+  end
+
+  def valid_option_pairs
+    pairs = [
+      %w(expected_exit_status exp_st),
+      %w(include_output_in_exception out_ex),
+      %w(puts_output out),
+    ]
+    pairs.each do |pair|
+      pair.each_with_index do |opt, index|
+        pair[index] = opt.to_sym
+      end
+    end
+  end
+
+  def valid_options
+    valid_option_pairs.flatten
+  end
+
+  def validate_long_vs_short_option_uniqueness(options)
+    invalid_options = (options.keys - valid_options)
+    fail(
+      ProcessHelper::InvalidOptionsError,
+      "Invalid option(s) '#{invalid_options.join(', ')}' given.  " \
+         "Valid options are: #{valid_options.join(', ')}") unless invalid_options.empty?
+    valid_option_pairs.each do |pair|
+      long_option_name, short_option_name = pair
+      both_long_and_short_option_specified =
+        options[long_option_name] && options[short_option_name]
+      next unless both_long_and_short_option_specified
+      fail(
+        ProcessHelper::InvalidOptionsError,
+        "Cannot specify both '#{long_option_name}' and '#{short_option_name}'")
+    end
+  end
+
+  def convert_short_options(options)
+    valid_option_pairs.each do |pair|
+      long, short = pair
+      options[long] = options.delete(short) unless options[short].nil?
+    end
+  end
+
+  def validate_option_values(options)
+    options.each do |option, value|
+      valid_option_pairs.each do |pair|
+        long_option_name, _ = pair
+        next unless option == long_option_name
+        validate_integer(pair, value) if option.to_s == 'expected_exit_status'
+        validate_boolean(pair, value) if option.to_s == 'include_output_in_exception'
+      end
+    end
+  end
+
+  def validate_integer(pair, value)
+    fail(
+      ProcessHelper::InvalidOptionsError,
+      "#{quote_and_join_pair(pair)} options must be an Integer"
+    ) unless value.is_a?(Integer)
+  end
+
+  def validate_boolean(pair, value)
+    fail(
+      ProcessHelper::InvalidOptionsError,
+      "#{quote_and_join_pair(pair)} options must be a boolean"
+    ) unless value == true || value == false
+  end
+
+  def quote_and_join_pair(pair)
+    pair.map { |o| "'#{o}'" }.join(',')
   end
 end
