@@ -11,6 +11,8 @@ describe 'static analysis checks' do
   end
 
   it 'rubocop' do
-    process('rubocop', puts_output: :error)
+    process(
+      "rubocop -c #{File.expand_path('../../.rubocop.yml', __FILE__)}",
+      puts_output: :error)
   end
 end
