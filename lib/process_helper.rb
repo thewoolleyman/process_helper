@@ -37,7 +37,7 @@ module ProcessHelper
         ':puts_output is :never, ' \
         'so all error output will be suppressed unless process ' \
         "fails with an exit code other than #{options[:expected_exit_status]} " \
-        '(in which case exception will include output ' +
+        '(in which case exception will include output ' \
         'because :include_output_in_exception is true)'
     end
     $stderr.puts(err_msg)

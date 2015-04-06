@@ -22,7 +22,6 @@ RSpec.describe ':expected_exit_status option' do
         end.to not_raise_error
             .and(output("\n").to_stdout)
       end
-
     end
 
     describe 'when exit_status != 0' do

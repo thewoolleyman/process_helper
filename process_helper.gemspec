@@ -23,6 +23,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bundler', '~> 1.6'
   spec.add_development_dependency 'rake', '~> 10'
   spec.add_development_dependency 'rspec', '~> 3.1'
-  spec.add_development_dependency 'ruby-lint', '~> 2.0.0'
-  spec.add_development_dependency 'rubocop', '>= 0.27.0'
+  spec.add_development_dependency 'ruby-lint', '= 2.0.2' # exact version for static analyis libs
+  spec.add_development_dependency 'rubocop', '= 0.29.1' # exact version for static analyis libs
 end
