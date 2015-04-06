@@ -1,13 +1,13 @@
-require_relative 'spec_helper'
+require_relative '../spec_helper'
 
-RSpec.describe 'exit status handling' do
+RSpec.describe ':expected_exit_status option' do
   attr_reader :clazz
 
   before do
     @clazz = Clazz.new
   end
 
-  describe ':expected_exit_status == 0' do
+  describe '== 0 (default)' do
     describe 'when exit_status == 0' do
       it 'succeeds' do
         expect do
@@ -15,6 +15,14 @@ RSpec.describe 'exit status handling' do
         end.to not_raise_error
             .and(output("\n").to_stdout)
       end
+
+      it 'succeeds when :expected_exit_status is explicitly 0' do
+        expect do
+          clazz.process('echo', expected_exit_status: 0)
+        end.to not_raise_error
+            .and(output("\n").to_stdout)
+      end
+
     end
 
     describe 'when exit_status != 0' do
@@ -31,7 +39,7 @@ RSpec.describe 'exit status handling' do
     end
   end
 
-  describe ':expected_exit_status != 0' do
+  describe '!= 0' do
     describe 'when exit_status == 0' do
       it 'fails with message' do
         expected_regex = 'Command succeeded but was expected to fail, ' \
@@ -44,6 +52,7 @@ RSpec.describe 'exit status handling' do
             .and(output("\n").to_stdout)
       end
     end
+
     describe 'when exit_status != 0' do
       it 'succeeds' do
         expect do
