@@ -11,13 +11,10 @@ module ProcessHelper
     fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
     options = options.dup
     options_processing(options)
-    Open3.popen2e(cmd) do |_, stdout_and_stderr, wait_thr|
-      output = ''
-      while (line = stdout_and_stderr.gets)
-        output += line
-      end
+    input_lines = options[:input_lines]
+    Open3.popen2e(cmd) do |stdin, stdout_and_stderr, wait_thr|
+      output = get_output(stdin, stdout_and_stderr, input_lines)
       puts output if options[:puts_output] == :always
-
       handle_exit_status(cmd, options, output, wait_thr)
       output
     end
@@ -41,6 +38,22 @@ module ProcessHelper
         'because :include_output_in_exception is true)'
     end
     $stderr.puts(err_msg)
+  end
+
+  def get_output(stdin, stdout_and_stderr, input_lines)
+    output = ''
+    puts_input_line_to_stdin(stdin, input_lines)
+    while (output_line = stdout_and_stderr.gets)
+      output += output_line
+      puts_input_line_to_stdin(stdin, input_lines)
+    end
+    output
+  end
+
+  def puts_input_line_to_stdin(stdin, input_lines)
+    input_line = input_lines.shift
+    return unless input_line
+    stdin.puts(input_line)
   end
 
   def handle_exit_status(cmd, options, output, wait_thr)
@@ -91,12 +104,14 @@ module ProcessHelper
     options[:puts_output] = :always if options[:puts_output].nil?
     options[:include_output_in_exception] = true if options[:include_output_in_exception].nil?
     options[:expected_exit_status] = [0] if options[:expected_exit_status].nil?
+    options[:input_lines] = [] if options[:input_lines].nil?
   end
 
   def valid_option_pairs
     pairs = [
       %w(expected_exit_status exp_st),
       %w(include_output_in_exception out_ex),
+      %w(input_lines in),
       %w(puts_output out),
     ]
     pairs.each do |pair|
