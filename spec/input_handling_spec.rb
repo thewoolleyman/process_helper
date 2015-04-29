@@ -109,6 +109,8 @@ RSpec.describe 'input handling' do
     end
 
     it 'fails if unprocessed input remains when command exits' do
+      # TODO: This fails when run with code coverage instrumentation
+      #       enabled (via RubyMine).  Why???
       expect do
         clazz.process(
           "ruby -e 'i=$stdin.gets; $stdout.puts i; exit'",
