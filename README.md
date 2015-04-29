@@ -2,17 +2,18 @@
 
 # process_helper
 
-Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling and capturing of STDOUT and STDERR streams.
+Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling, passing of lines to STDIN, and capturing of STDOUT and STDERR streams.
 
 ## Goals
 
 * Always raise an exception on unexpected exit status (i.e. return code or `$!`)
-* Combine STDOUT and STDERR streams into STDOUT (using [Open3.popen2e](http://ruby-doc.org/stdlib-2.1.5/libdoc/open3/rdoc/Open3.html#method-c-popen2e)),
+* Combine and interleave STDOUT and STDERR streams into STDOUT (using [Open3.popen2e](http://ruby-doc.org/stdlib-2.1.5/libdoc/open3/rdoc/Open3.html#method-c-popen2e)),
   so you don't have to worry about how to capture the output of both streams.
-* Allow override of the expected exit status(es) (zero is expected by default)
 * Provide useful options for suppressing output and including output when an exception
   is raised due to an unexpected exit status
+* Provide real-time streaming of combined STDOUT/STDERR streams in addition to returning full combined output as a string returned from the method and/or in the exception.  
 * Support passing multi-line input to the STDIN stream via arrays of strings.
+* Allow override of the expected exit status(es) (zero is expected by default)
 * Provide short forms of all options for terse, concise usage.
 
 ## Non-Goals
@@ -20,6 +21,16 @@ Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling a
 * Any explicit support for process forks, multiple threads, or anything other
   than a single direct child process.
 * Any support for separate handling of STDOUT and STDERR streams
+
+## Why Yet Another Ruby Process Wrapper Library?
+
+There's many other libraries to make it easier to work with processes in Ruby (see the Resources section).  However, `process_helper` was created because none of them made it *easy* to run processes while meeting **all** of these requirements (redundant details are repeated above in Goals section):
+
+* Combine STDOUT/STDERR output streams ***interleaved chronologically as emitted***
+* Stream STDOUT/STDERR real-time ***while process is still running***, in addition to returning full output as a string and/or in an exception
+* Guarantee an exception is ***always raised*** on an unexpected exit status (and allow specification of ***multiple nonzero values*** as expected exit statuses)
+* Can be used ***very concisely***.  I.e. All behavior can be invoked via a single mixed-in module with single public method call using terse options with sensible defaults, no need to use IO streams directly or have any blocks or local variables declared.
+
 
 ## Installation
 
@@ -151,3 +162,17 @@ ProcessHelper::VERSION
 5. If you are awesome, use `git rebase --interactive` to ensure
    you have a single atomic commit on your branch.
 6. Create a new Pull Request
+
+## Resources
+
+Other Ruby Process tools/libraries
+
+* [open4](https://github.com/ahoward/open4) - a solid and useful library - the main thing I missed in it was easily combining real-time streaming interleaved STDOUT/STDERR streams
+* [open4 on ruby toolbox](https://www.ruby-toolbox.com/projects/open4) - see if there's some useful higher-level gem that depends on it and gives you functionality you may need
+* A great series of blog posts by Devver:
+  * [https://devver.wordpress.com/2009/06/30/a-dozen-or-so-ways-to-start-sub-processes-in-ruby-part-1/](https://devver.wordpress.com/2009/06/30/a-dozen-or-so-ways-to-start-sub-processes-in-ruby-part-1/)
+  * [https://devver.wordpress.com/2009/07/13/a-dozen-or-so-ways-to-start-sub-processes-in-ruby-part-2/](https://devver.wordpress.com/2009/07/13/a-dozen-or-so-ways-to-start-sub-processes-in-ruby-part-2/)
+  * [https://devver.wordpress.com/2009/10/12/ruby-subprocesses-part_3/](https://devver.wordpress.com/2009/10/12/ruby-subprocesses-part_3/)
+
+
+
