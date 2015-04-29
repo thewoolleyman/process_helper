@@ -2,6 +2,7 @@ require_relative 'process_helper/version'
 require_relative 'process_helper/empty_command_error'
 require_relative 'process_helper/invalid_options_error'
 require_relative 'process_helper/unexpected_exit_status_error'
+require_relative 'process_helper/unprocessed_input_error'
 require 'open3'
 
 # Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
@@ -11,10 +12,16 @@ module ProcessHelper
     fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
     options = options.dup
     options_processing(options)
-    input_lines = options[:input_lines]
     Open3.popen2e(cmd) do |stdin, stdout_and_stderr, wait_thr|
-      output = get_output(stdin, stdout_and_stderr, input_lines)
-      puts output if options[:puts_output] == :always
+      always_puts_output = (options[:puts_output] == :always)
+      output = get_output(
+        stdin,
+        stdout_and_stderr,
+        options[:input_lines],
+        always_puts_output,
+        options[:timeout]
+      )
+      stdin.close
       handle_exit_status(cmd, options, output, wait_thr)
       output
     end
@@ -40,19 +47,63 @@ module ProcessHelper
     $stderr.puts(err_msg)
   end
 
-  def get_output(stdin, stdout_and_stderr, input_lines)
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity
+  def get_output(stdin, stdout_and_stderr, original_input_lines, always_puts_output, timeout)
+    input_lines = original_input_lines.dup
+    input_lines_processed = 0
+    current_input_line_processed = false
     output = ''
-    puts_input_line_to_stdin(stdin, input_lines)
-    while (output_line = stdout_and_stderr.gets)
-      output += output_line
-      puts_input_line_to_stdin(stdin, input_lines)
+    begin
+      while (output_line = readline_nonblock(stdout_and_stderr))
+        current_input_line_processed = true
+        puts output_line if always_puts_output
+        output += output_line
+        output_line = nil
+      end
+    rescue EOFError
+      input_lines_processed -= 1  if !original_input_lines.empty? && !current_input_line_processed
+      fail_unless_all_input_lines_processed(original_input_lines, input_lines_processed)
+    rescue IO::WaitReadable
+      if input_lines.empty?
+        result = IO.select([stdout_and_stderr], nil, nil, timeout)
+        retry unless result.nil?
+      else
+        current_input_line_processed = false
+        puts_input_line_to_stdin(stdin, input_lines)
+        input_lines_processed += 1
+        result = IO.select([stdout_and_stderr], nil, nil, timeout)
+        retry
+      end
     end
     output
   end
 
+  def readline_nonblock(io)
+    buffer = ''
+    while (ch = io.read_nonblock(1))
+      buffer << ch
+      if ch == "\n"
+        result = buffer
+        return result
+      end
+    end
+  end
+
+  def fail_unless_all_input_lines_processed(original_input_lines, input_lines_processed)
+    unprocessed_input_lines = original_input_lines.length - input_lines_processed
+    msg = "Output stream closed with #{unprocessed_input_lines} " \
+    'input lines left unprocessed:' \
+    "#{original_input_lines[-(unprocessed_input_lines)..-1]}"
+    fail(
+      ProcessHelper::UnprocessedInputError,
+      msg
+    ) unless unprocessed_input_lines == 0
+  end
+
   def puts_input_line_to_stdin(stdin, input_lines)
+    return if input_lines.empty?
     input_line = input_lines.shift
-    return unless input_line
     stdin.puts(input_line)
   end
 
@@ -66,7 +117,7 @@ module ProcessHelper
       exception_message += " Command Output: \"#{output}\""
     end
     puts_output_only_on_exception(options, output)
-    fail UnexpectedExitStatusError, exception_message
+    fail ProcessHelper::UnexpectedExitStatusError, exception_message
   end
 
   def create_exception_message(cmd, exit_status, expected_exit_status)
@@ -113,6 +164,7 @@ module ProcessHelper
       %w(include_output_in_exception out_ex),
       %w(input_lines in),
       %w(puts_output out),
+      %w(timeout kill),
     ]
     pairs.each do |pair|
       pair.each_with_index do |opt, index|

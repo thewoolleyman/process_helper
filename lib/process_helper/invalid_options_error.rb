@@ -1,4 +1,4 @@
-# Error which is raised when a command returns an unexpected exit status (return code)
+# Error which is raised when options are invalid
 module ProcessHelper
   class InvalidOptionsError < RuntimeError
   end

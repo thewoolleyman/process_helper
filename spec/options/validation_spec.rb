@@ -57,6 +57,8 @@ RSpec.describe 'options validation raises InvalidOptionError' do
 
   it 'when input_lines is passed invalid value'
 
+  it 'when timeout is passed non-float'
+
   it 'when passed a short option' do
     expect do
       clazz.process('echo', exp_st: '0')
