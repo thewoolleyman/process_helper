@@ -45,6 +45,18 @@ And then execute:
 Or install it yourself as:
 
     $ gem install process_helper
+    
+Or, if you want to avoid a Gem/RubyGems dependency, you can copy the `process_helper.rb` file from the `lib` folder directly into your project and require it:
+
+    # from a ruby file:
+    require_relative 'process_helper'
+    
+    # from IRB:
+    require './process_helper'
+
+    # or put the directory containing it on the load path:
+    $LOAD_PATH.unshift('.')
+    require 'process_helper'
 
 ## Usage
 

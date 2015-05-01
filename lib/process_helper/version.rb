@@ -1,4 +1,0 @@
-# Library version
-module ProcessHelper
-  VERSION = '0.0.2'
-end

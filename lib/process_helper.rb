@@ -1,12 +1,9 @@
-require_relative 'process_helper/version'
-require_relative 'process_helper/empty_command_error'
-require_relative 'process_helper/invalid_options_error'
-require_relative 'process_helper/unexpected_exit_status_error'
-require_relative 'process_helper/unprocessed_input_error'
 require 'open3'
 
 # Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
 module ProcessHelper
+  PROCESS_HELPER_VERSION = '0.0.3'
+
   def process(cmd, options = {})
     cmd = cmd.to_s
     fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
@@ -62,7 +59,7 @@ module ProcessHelper
         output_line = nil
       end
     rescue EOFError
-      input_lines_processed -= 1  if !original_input_lines.empty? && !current_input_line_processed
+      input_lines_processed -= 1 if !original_input_lines.empty? && !current_input_line_processed
       fail_unless_all_input_lines_processed(original_input_lines, input_lines_processed)
     rescue IO::WaitReadable
       if input_lines.empty?
@@ -254,5 +251,23 @@ module ProcessHelper
     return if options[:expected_exit_status].is_a?(Array)
     options[:expected_exit_status] =
       [options[:expected_exit_status]]
+  end
+
+  # Custom Exception Classes:
+
+  # Error which is raised when a command is empty
+  class EmptyCommandError < RuntimeError
+  end
+
+  # Error which is raised when options are invalid
+  class InvalidOptionsError < RuntimeError
+  end
+
+  # Error which is raised when a command returns an unexpected exit status (return code)
+  class UnexpectedExitStatusError < RuntimeError
+  end
+
+  # Error which is raised when command exists while input lines remain unprocessed
+  class UnprocessedInputError < RuntimeError
   end
 end
