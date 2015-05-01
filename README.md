@@ -196,6 +196,10 @@ ProcessHelper::VERSION
    you have a single atomic commit on your branch.
 6. Create a new Pull Request
 
+## (Un)License
+
+`process_helper` is (un)licensed under the [unlicense](http://unlicense.org/).  So, feel free to copy it into your project (it's usable as a single required file and module), use it, abuse it, do what you will, no attribution required. :)
+
 ## Resources
 
 Other Ruby Process tools/libraries
