@@ -128,6 +128,27 @@ Valid values are `:always`, `:error`, and `:never`.  Default value is `:always`.
   error - i.e. non-zero or unexpected exit status
 * `:never` will never print output to STDOUT
 
+### `:timeout` (short form `:kill`)
+
+***WARNING! This option is beta and will be changed in a future release!***
+
+Valid value is a float, e.g. `1.5`.  Default value is nil/undefined.
+
+* Currently controls how long `process_helper` will wait to read from
+  a blocked IO stream before timing out (via [IO.select](http://ruby-doc.org/core-2.2.0/IO.html#method-c-select)).  For example, invoking `cat` with no arguments, which by default will continue accepting input until killed.
+* If undefined (default), there will be no timeout, and `process_helper` will hang if a process hangs while waiting to read from IO.
+
+***The following changes are planned for this option:***
+
+* Add validation of value (enforced to be a float).
+* Add ability for the timeout value to also kill long running processes which are ***not*** in blocked waiting on an IO stream read (i.e. kill process regardless of any IO state, not just via [IO.selects](http://ruby-doc.org/core-2.2.0/IO.html#method-c-select) timeout support).
+* Have both types of timeouts raise different and unique exception classes.
+* Possibly have different option names to allow different timeout values for the two types of timeouts.
+
+See [https://www.pivotaltracker.com/story/show/93303096](https://www.pivotaltracker.com/story/show/93303096) for more details.
+
+
+
 ## Warnings if failure output will be suppressed based on options
 
 ProcessHelper will give you a warning if you pass a combination of options that would
