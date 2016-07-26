@@ -1,5 +1,17 @@
 ---
 # https://github.com/bbatsov/rubocop/blob/master/config/default.yml
+
+inherit_from: .rubocop_todo.yml
+
+AllCops:
+  Include:
+    - '**/Rakefile'
+    - '**/config.ru'
+  Exclude:
+    - 'client/node_modules/**/*'
+    - 'db/**/*'
+    - 'vendor/bundle/**/*'
+
 Metrics/LineLength:
   Max: 99
 
@@ -7,23 +19,40 @@ Metrics/MethodLength:
   CountComments: false  # count full line comments?
   Max: 20
 
-Style/CaseIndentation:
-  IndentOneStep: true
+Metrics/ModuleLength:
+  Max: 300
 
-Style/FirstParameterIndentation:
-  Enabled: false
-
-Style/MultilineBlockChain:
-  Enabled: false
+Style/FileName:
+  # File names listed in AllCops:Include are excluded by default. Add extra
+  # excludes here.
+  Exclude:
+    - bin/ruby-lint
 
 Style/MultilineOperationIndentation:
-  Enabled: false
+  EnforcedStyle: indented
+
+Style/SignalException:
+  # prefer fail for app code, but rails generates raise in binstubs so allow that too
+  EnforcedStyle: semantic
 
 Style/SpaceAroundEqualsInParameterDefault:
   # compatibility with RubyMine defaults (apparently can't override?)
   EnforcedStyle: space
 
-Style/TrailingComma:
-  # can't make this only apply to arrays and not params, so it's disabled
+Style/TrailingCommaInLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: no_comma
+
+Style/MultilineMethodCallIndentation:
+  # can't convince rubymine to not indent 2 spaces with mult-line method calls
   Enabled: false
-  #EnforcedStyleForMultiline: comma
+
+Style/MultilineOperationIndentation:
+  # can't convince rubymine 7 to not indent 4 spaces with mult-line expect(x).to receive ...
+  Enabled: false
+
+Style/RegexpLiteral:
+  # This is required or else rubocop argues with itself when trying to escape a slash on a single-line regex
+  AllowInnerSlashes: true
