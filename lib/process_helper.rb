@@ -52,11 +52,11 @@ module ProcessHelper
     current_input_line_processed = false
     output = ''
     begin
-      while (output_line = readline_nonblock(stdout_and_stderr))
+      while (ch = stdout_and_stderr.read_nonblock(1))
         current_input_line_processed = true
-        puts output_line if always_puts_output
-        output += output_line
-        output_line = nil
+        printf ch if always_puts_output
+        output += ch
+        ch = nil
       end
     rescue EOFError
       input_lines_processed -= 1 if !original_input_lines.empty? && !current_input_line_processed
@@ -74,17 +74,6 @@ module ProcessHelper
       end
     end
     output
-  end
-
-  def readline_nonblock(io)
-    buffer = ''
-    while (ch = io.read_nonblock(1))
-      buffer << ch
-      if ch == "\n"
-        result = buffer
-        return result
-      end
-    end
   end
 
   def fail_unless_all_input_lines_processed(original_input_lines, input_lines_processed)

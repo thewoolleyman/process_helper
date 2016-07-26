@@ -58,4 +58,27 @@ RSpec.describe 'output handling' do
       end
     end
   end
+
+  describe 'when output does not have a newline' do
+    it 'captures output' do
+      expect do
+        clazz.process(
+          'printf stdout',
+          puts_output: :always)
+      end.to output('stdout').to_stdout
+        .and(not_output.to_stderr)
+    end
+  end
+
+  describe 'when output is colored' do
+    it 'preserves color' do
+      colored_text = "\e[0;31mSTDOUT\e[0m"
+      expect do
+        clazz.process(
+          'printf "\033[0;31mSTDOUT\033[0m" > /dev/stdout',
+          puts_output: :always)
+      end.to output(colored_text).to_stdout
+        .and(not_output.to_stderr)
+    end
+  end
 end
