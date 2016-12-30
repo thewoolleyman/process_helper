@@ -1,3 +1,4 @@
+require 'simplecov'
 SimpleCov.start if ENV['CI']
 
 require 'rspec'
