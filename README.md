@@ -32,6 +32,24 @@ There's many other libraries to make it easier to work with processes in Ruby (s
 * Can be used ***very concisely***.  I.e. All behavior can be invoked via a single mixed-in module with single public method call using terse options with sensible defaults, no need to use IO streams directly or have any blocks or local variables declared.
 
 
+## Table of Contents
+
+* [Goals](#goals)
+* [Non-Goals](#non-goals)
+* [Why Yet Another Ruby Process Wrapper Library](#why-yet-another-ruby-process-wrapper-library)
+* [Installation](#installation)
+* [Usage](#usage)
+* [Options](#options)
+  * [`:expected_exit_status` (short form `:exp_st`)](#expected_exit_status-short-form-exp_st)
+  * [`:include_output_in_exception` (short form `:out_ex`)](#include_output_in_exception-short-form-out_ex)
+  * [`:puts_output` (short form `:out`)](#puts_output-short-form-out)
+  * [`:timeout` (short form `:kill`)](#timeout-short-form-kill)
+* [Warnings if failure output will be suppressed based on options](#warnings-if-failure-output-will-be-suppressed-based-on-options)  
+* [Version](#version)
+* [Contributing](#contributing)
+* [(Un)License](#unlicense)
+* [Resources](#resources)
+
 ## Installation
 
 Add this line to your application's Gemfile:
