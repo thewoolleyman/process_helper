@@ -3,6 +3,8 @@ if ENV['CODECLIMATE_REPO_TOKEN']
   CodeClimate::TestReporter.start
 end
 
+SimpleCov.start if ENV['CI']
+
 require 'rspec'
 require 'rspec/retry'
 require_relative '../lib/process_helper'
