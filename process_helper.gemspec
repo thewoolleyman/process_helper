@@ -1,11 +1,8 @@
 # coding: utf-8
-lib = File.expand_path('../lib', __FILE__)
-$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'process_helper'
 
 Gem::Specification.new do |spec|
   spec.name = 'process_helper'
-  spec.version = ProcessHelper::PROCESS_HELPER_VERSION
+  spec.version = '0.0.4'
   spec.authors = ['Glenn Oppegard', 'Chad Woolley']
   spec.email = ['oppegard@gmail.com', 'thewoolleyman@gmail.com']
   spec.summary = "Makes it easier to spawn ruby sub-processes with proper capturing /

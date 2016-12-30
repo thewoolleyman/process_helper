@@ -2,8 +2,6 @@ require 'open3'
 
 # Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
 module ProcessHelper
-  PROCESS_HELPER_VERSION = '0.0.4'.freeze
-
   def process(cmd, options = {})
     cmd = cmd.to_s
     fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
