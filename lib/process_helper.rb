@@ -12,7 +12,7 @@ module ProcessHelper
       output = get_output(
         stdin,
         stdout_and_stderr,
-        options[:input_lines],
+        options[:input],
         always_puts_output,
         options[:timeout]
       )
@@ -42,53 +42,40 @@ module ProcessHelper
     $stderr.puts(err_msg)
   end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
-  # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity
-  def get_output(stdin, stdout_and_stderr, original_input_lines, always_puts_output, timeout)
-    input_lines = original_input_lines.dup
-    input_lines_processed = 0
-    current_input_line_processed = false
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+  def get_output(stdin, stdout_and_stderr, input, always_puts_output, timeout)
     output = ''
     begin
-      while (ch = stdout_and_stderr.read_nonblock(1))
-        current_input_line_processed = true
+      until input.eof?
+        Timeout.timeout(timeout) do
+          in_ch = input.read_nonblock(1)
+          stdin.write_nonblock(in_ch)
+        end
+        stdin.flush
+      end
+      ch = nil
+      loop do
+        Timeout.timeout(timeout) do
+          ch = stdout_and_stderr.read_nonblock(1)
+        end
+        break unless ch
         printf ch if always_puts_output
         output += ch
-        ch = nil
+        stdout_and_stderr.flush
       end
     rescue EOFError
-      input_lines_processed -= 1 if !original_input_lines.empty? && !current_input_line_processed
-      fail_unless_all_input_lines_processed(original_input_lines, input_lines_processed)
+      return output
     rescue IO::WaitReadable
-      if input_lines.empty?
-        result = IO.select([stdout_and_stderr], nil, nil, timeout)
-        retry unless result.nil?
-      else
-        current_input_line_processed = false
-        puts_input_line_to_stdin(stdin, input_lines)
-        input_lines_processed += 1
-        result = IO.select([stdout_and_stderr], nil, nil, timeout)
-        retry
-      end
+      result = IO.select([stdout_and_stderr], nil, nil, timeout)
+      retry unless result.nil?
+    rescue IO::WaitWritable
+      IO.select(nil, [stdin], nil, timeout)
+      retry
     end
+    # TODO: Why do we sometimes get here with no EOFError occurring, but instead
+    # via IO::WaitReadable with a nil select result?
     output
-  end
-
-  def fail_unless_all_input_lines_processed(original_input_lines, input_lines_processed)
-    unprocessed_input_lines = original_input_lines.length - input_lines_processed
-    msg = "Output stream closed with #{unprocessed_input_lines} " \
-    'input lines left unprocessed:' \
-    "#{original_input_lines[-(unprocessed_input_lines)..-1]}"
-    fail(
-      ProcessHelper::UnprocessedInputError,
-      msg
-    ) unless unprocessed_input_lines == 0
-  end
-
-  def puts_input_line_to_stdin(stdin, input_lines)
-    return if input_lines.empty?
-    input_line = input_lines.shift
-    stdin.puts(input_line)
   end
 
   def handle_exit_status(cmd, options, output, wait_thr)
@@ -128,10 +115,18 @@ module ProcessHelper
   def options_processing(options)
     validate_long_vs_short_option_uniqueness(options)
     convert_short_options(options)
+    validate_input_option(options[:input]) if options[:input]
     set_option_defaults(options)
     validate_option_values(options)
     convert_scalar_expected_exit_status_to_array(options)
     warn_if_output_may_be_suppressed_on_error(options)
+  end
+
+  def validate_input_option(input_option)
+    fail(
+      ProcessHelper::InvalidOptionsError,
+      "#{quote_and_join_pair(%w(input in))} options must be a String or a StringIO"
+    ) unless input_option.is_a?(String) || input_option.is_a?(StringIO)
   end
 
   # rubocop:disable Style/AccessorMethodName
@@ -139,14 +134,14 @@ module ProcessHelper
     options[:puts_output] = :always if options[:puts_output].nil?
     options[:include_output_in_exception] = true if options[:include_output_in_exception].nil?
     options[:expected_exit_status] = [0] if options[:expected_exit_status].nil?
-    options[:input_lines] = [] if options[:input_lines].nil?
+    options[:input] = StringIO.new(options[:input].to_s) unless options[:input].is_a?(StringIO)
   end
 
   def valid_option_pairs
     pairs = [
       %w(expected_exit_status exp_st),
       %w(include_output_in_exception out_ex),
-      %w(input_lines in),
+      %w(input in),
       %w(puts_output out),
       %w(timeout kill),
     ]
@@ -254,7 +249,7 @@ module ProcessHelper
   class UnexpectedExitStatusError < RuntimeError
   end
 
-  # Error which is raised when command exists while input lines remain unprocessed
+  # Error which is raised when command exists while input remains unprocessed
   class UnprocessedInputError < RuntimeError
   end
 end

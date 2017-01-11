@@ -13,7 +13,7 @@ RSpec.describe 'input handling' do
       expect do
         clazz.process(
           "ruby -e 'while(i=$stdin.gets) do puts i; $stdout.flush; end'",
-          input_lines: ['input1'],
+          input: "input1\n",
           timeout: max_process_wait
         )
       end.to output(/input1\n/).to_stdout
@@ -24,7 +24,7 @@ RSpec.describe 'input handling' do
       expect do
         clazz.process(
           "ruby -e 'while(i=$stdin.gets) do puts i; $stdout.flush; end'",
-          input_lines: %w(input1 input2),
+          input: "input1\ninput2\n",
           timeout: max_process_wait
         )
       end.to output(/input1\ninput2\n/).to_stdout
@@ -37,7 +37,7 @@ RSpec.describe 'input handling' do
           # -u disables output buffering, -n numbers output lines (to distinguish from input)
           'cat -u -n',
           # TODO: how to send Ctrl-D to exit without timeout being required?
-          input_lines: ['line1', 'line2', 'line3', "\C-d"],
+          input: "line1\nline2\nline3\n\C-d\n",
           timeout: max_process_wait
         )
       end.to output(/.*1\tline1\n.*2\tline2\n.*3\tline3\n.*4\t\u0004\n/).to_stdout
@@ -57,7 +57,7 @@ RSpec.describe 'input handling' do
           'end'
         clazz.process(
           %(ruby -e '#{cmd}'),
-          input_lines: %w(line1 line2 line3 exit),
+          input: "line1\nline2\nline3\nexit\n",
           timeout: max_process_wait
         )
       end.to output(/out:line1\nerr:line1\nout:line2\nerr:line2\nout:line3\nerr:line3\n/).to_stdout
@@ -70,15 +70,15 @@ RSpec.describe 'input handling' do
       expect do
         clazz.process(
           'irb -f --prompt=default',
-          input_lines: [
+          input: [
             '$stdout.puts "hi"',
             '$stdout.flush',
             '$stderr.puts "aaa\nbbb\nccc"',
             '$stderr.flush',
             '$stdout.puts "bye"',
             '$stdout.flush',
-            'exit'
-          ]
+            "exit\n"
+          ].join("\n")
         )
       end.to output(/\nhi\n.*\naaa\nbbb\nccc.*\nbye\n/m).to_stdout
           .and(not_output.to_stderr)
@@ -90,7 +90,7 @@ RSpec.describe 'input handling' do
           "ruby -e 'i=$stdin.gets; $stdout.puts i; $stdout.flush; " \
           "$stderr.puts i; $stderr.flush; exit 1'",
           puts_output: :error,
-          input_lines: ['hi']
+          input: "hi\n"
         )
       end.to raise_error(
           ProcessHelper::UnexpectedExitStatusError,
@@ -102,24 +102,31 @@ RSpec.describe 'input handling' do
       expect do
         clazz.process(
           "ruby -e 'i=$stdin.gets; $stdout.puts i; $stdout.flush; exit'",
-          input_lines: ['hi']
+          input: "hi\n"
         )
       end.to output(/hi\n/m).to_stdout
           .and(not_output.to_stderr)
     end
 
-    it 'fails if unprocessed input remains when command exits' do
-      # TODO: This fails when run with code coverage instrumentation
-      #       enabled (via RubyMine).  Why???
+    it 'does not require a newline or flush' do
+      pending('Try to fix with PTY: https://ruby-doc.org/stdlib-2.2.3/libdoc/pty/rdoc/PTY.html')
       expect do
         clazz.process(
-          "ruby -e 'i=$stdin.gets; $stdout.puts i; exit'",
-          input_lines: %w(hi unprocessed)
+          %q(ruby -e 'require "io/console"; i=$stdin.getch; puts "4" + i;'),
+          input: '2'
         )
-      end.to raise_error(
-          ProcessHelper::UnprocessedInputError,
-          /Output stream closed with 1 input lines left unprocessed/)
-          .and(output(/hi\n/).to_stdout)
+      end.to output(/42/).to_stdout
+          .and(not_output.to_stderr)
+    end
+
+    it 'allows a StringIO as input' do
+      expect do
+        clazz.process(
+          "ruby -e 'i=$stdin.gets; $stdout.puts i; $stdout.flush; exit'",
+          input: StringIO.new("hi\n")
+        )
+      end.to output(/hi\n/m).to_stdout
+          .and(not_output.to_stderr)
     end
   end
 end

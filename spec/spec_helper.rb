@@ -11,7 +11,7 @@ RSpec::Matchers.define_negated_matcher :not_raise_error, :raise_error
 # RSpec config
 RSpec.configure do |config|
   config.verbose_retry = true
-  config.default_retry_count = 5
+  config.default_retry_count = 0
   config.default_sleep_interval = 1
 end
 

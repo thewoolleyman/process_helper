@@ -55,7 +55,7 @@ RSpec.describe 'options validation raises InvalidOptionError' do
         "'puts_output','out' options must be one of the following: :always, :error, :never")
   end
 
-  it 'when input_lines is passed invalid value'
+  it 'when input is passed invalid value'
 
   it 'when timeout is passed non-float'
 
