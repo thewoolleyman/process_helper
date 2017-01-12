@@ -108,7 +108,7 @@ RSpec.describe 'input handling' do
           .and(not_output.to_stderr)
     end
 
-    it 'does not require a newline or flush' do
+    it 'does not require a newline or flush via getch (requires pseudo-tty)' do
       pending('Try to fix with PTY: https://ruby-doc.org/stdlib-2.2.3/libdoc/pty/rdoc/PTY.html')
       expect do
         clazz.process(

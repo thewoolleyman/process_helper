@@ -222,6 +222,7 @@ ProcessHelper::VERSION
 
 Other Ruby Process tools/libraries
 
+* a [comprehensive StackOverflow article](http://stackoverflow.com/questions/7212573/when-to-use-each-method-of-launching-a-subprocess-in-ruby) describing, in detail, the myriad methods of launching Ruby subprocesses.
 * [open4](https://github.com/ahoward/open4) - a solid and useful library - the main thing I missed in it was easily combining real-time streaming interleaved STDOUT/STDERR streams
 * [open4 on ruby toolbox](https://www.ruby-toolbox.com/projects/open4) - see if there's some useful higher-level gem that depends on it and gives you functionality you may need
 * A great series of blog posts by Devver:
