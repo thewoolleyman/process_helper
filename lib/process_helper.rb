@@ -1,4 +1,5 @@
 require 'open3'
+require 'pty'
 
 # Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
 module ProcessHelper
@@ -7,85 +8,115 @@ module ProcessHelper
     fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
     options = options.dup
     options_processing(options)
-    Open3.popen2e(cmd) do |stdin, stdout_and_stderr, wait_thr|
-      always_puts_output = (options[:puts_output] == :always)
-      output = get_output(
-        stdin,
-        stdout_and_stderr,
-        options[:input],
-        always_puts_output,
-        options[:timeout]
-      )
-      stdin.close
-      handle_exit_status(cmd, options, output, wait_thr)
-      output
-    end
+    output, process_status =
+      if options[:pseudo_terminal]
+        process_with_pseudo_terminal(cmd, options)
+      else
+        process_with_popen(cmd, options)
+      end
+    handle_exit_status(cmd, options, output, process_status)
+    output
   end
 
   private
 
-  def warn_if_output_may_be_suppressed_on_error(options)
-    return unless options[:puts_output] == :never
+  def process_with_popen(cmd, options)
+    Open3.popen2e(cmd) do |stdin, stdout_and_stderr, wait_thr|
+      begin
+        output = get_output(stdin, stdout_and_stderr, options)
+      rescue TimeoutError
+        # ensure the thread is killed
+        wait_thr.kill
+        raise
+      end
+      process_status = wait_thr.value
+      return [output, process_status]
+    end
+  end
 
-    if options[:include_output_in_exception] == false
-      err_msg = 'WARNING: Check your ProcessHelper options - ' \
+  def process_with_pseudo_terminal(cmd, options)
+    PTY.spawn(cmd) do |stdout_and_stderr, stdin, pid|
+      output = get_output(stdin, stdout_and_stderr, options)
+      process_status = PTY.check(pid)
+      # TODO: come up with a test that illustrates pid not exiting
+      fail "ERROR: pid #{pid} did not exit" unless process_status
+      return [output, process_status]
+    end
+  end
+
+  def warn_if_output_may_be_suppressed_on_error(options)
+    return unless options[:puts_output] == :never &&
+      options[:include_output_in_exception] == false
+
+    err_msg = 'WARNING: Check your ProcessHelper options - ' \
         ':puts_output is :never, and :include_output_in_exception ' \
         'is false, so all error output will be suppressed if process fails.'
-    else
-      err_msg = 'WARNING: Check your ProcessHelper options - ' \
-        ':puts_output is :never, ' \
-        'so all error output will be suppressed unless process ' \
-        "fails with an exit code other than #{options[:expected_exit_status]} " \
-        '(in which case exception will include output ' \
-        'because :include_output_in_exception is true)'
-    end
     $stderr.puts(err_msg)
   end
 
-  # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Metrics/MethodLength
-  def get_output(stdin, stdout_and_stderr, input, always_puts_output, timeout)
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity
+  def get_output(stdin, stdout_and_stderr, options)
+    input = options[:input]
+    always_puts_output = (options[:puts_output] == :always)
+    timeout = options[:timeout]
     output = ''
     begin
-      until input.eof?
-        Timeout.timeout(timeout) do
-          in_ch = input.read_nonblock(1)
-          stdin.write_nonblock(in_ch)
+      begin
+        until input.eof?
+          Timeout.timeout(timeout) do
+            in_ch = input.read_nonblock(1)
+            stdin.write_nonblock(in_ch)
+          end
+          stdin.flush
         end
-        stdin.flush
-      end
-      ch = nil
-      loop do
-        Timeout.timeout(timeout) do
-          ch = stdout_and_stderr.read_nonblock(1)
+        ch = nil
+        loop do
+          Timeout.timeout(timeout) do
+            ch = stdout_and_stderr.read_nonblock(1)
+          end
+          break unless ch
+          printf ch if always_puts_output
+          output += ch
+          stdout_and_stderr.flush
         end
-        break unless ch
-        printf ch if always_puts_output
-        output += ch
-        stdout_and_stderr.flush
+      rescue EOFError
+        return output
+      rescue IO::WaitReadable
+        result = IO.select([stdout_and_stderr], nil, nil, timeout)
+        raise Timeout::Error if result.nil?
+        retry
+      rescue IO::WaitWritable
+        result = IO.select(nil, [stdin], nil, timeout)
+        raise Timeout::Error if result.nil?
+        retry
       end
-    rescue EOFError
-      return output
-    rescue IO::WaitReadable
-      result = IO.select([stdout_and_stderr], nil, nil, timeout)
-      retry unless result.nil?
-    rescue IO::WaitWritable
-      IO.select(nil, [stdin], nil, timeout)
-      retry
+    rescue Timeout::Error
+      handle_timeout_error(output, options)
+    ensure
+      stdout_and_stderr.close
+      stdin.close
     end
     # TODO: Why do we sometimes get here with no EOFError occurring, but instead
-    # via IO::WaitReadable with a nil select result?
+    # via IO::WaitReadable with a nil select result? (via popen, not sure if via tty)
     output
   end
 
-  def handle_exit_status(cmd, options, output, wait_thr)
-    expected_exit_status = options[:expected_exit_status]
-    exit_status = wait_thr.value
-    return if expected_exit_status.include?(exit_status.exitstatus)
-
-    exception_message = create_exception_message(cmd, exit_status, expected_exit_status)
+  def handle_timeout_error(output, options)
+    msg = "Timed out after #{options.fetch(:timeout)} seconds."
     if options[:include_output_in_exception]
-      exception_message += " Command Output: \"#{output}\""
+      msg += " Command output prior to timeout: \"#{output}\""
+    end
+    fail(TimeoutError, msg)
+  end
+
+  def handle_exit_status(cmd, options, output, process_status)
+    expected_exit_status = options[:expected_exit_status]
+    return if expected_exit_status.include?(process_status.exitstatus)
+
+    exception_message = create_exception_message(cmd, process_status, expected_exit_status)
+    if options[:include_output_in_exception]
+      exception_message += " Command output: \"#{output}\""
     end
     puts_output_only_on_exception(options, output)
     fail ProcessHelper::UnexpectedExitStatusError, exception_message
@@ -133,6 +164,7 @@ module ProcessHelper
   def set_option_defaults(options)
     options[:puts_output] = :always if options[:puts_output].nil?
     options[:include_output_in_exception] = true if options[:include_output_in_exception].nil?
+    options[:pseudo_terminal] = false if options[:pseudo_terminal].nil?
     options[:expected_exit_status] = [0] if options[:expected_exit_status].nil?
     options[:input] = StringIO.new(options[:input].to_s) unless options[:input].is_a?(StringIO)
   end
@@ -142,6 +174,7 @@ module ProcessHelper
       %w(expected_exit_status exp_st),
       %w(include_output_in_exception out_ex),
       %w(input in),
+      %w(pseudo_terminal pty),
       %w(puts_output out),
       %w(timeout kill),
     ]
@@ -187,6 +220,7 @@ module ProcessHelper
         next unless option == long_option_name
         validate_integer(pair, value) if option.to_s == 'expected_exit_status'
         validate_boolean(pair, value) if option.to_s == 'include_output_in_exception'
+        validate_boolean(pair, value) if option.to_s == 'pseudo_terminal'
         validate_puts_output(pair, value) if option.to_s == 'puts_output'
       end
     end
@@ -243,6 +277,10 @@ module ProcessHelper
 
   # Error which is raised when options are invalid
   class InvalidOptionsError < RuntimeError
+  end
+
+  # Error which is raised when any read or write operation takes longer than timeout (kill) option
+  class TimeoutError < RuntimeError
   end
 
   # Error which is raised when a command returns an unexpected exit status (return code)

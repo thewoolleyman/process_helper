@@ -70,7 +70,7 @@ RSpec.describe ':puts_output option' do
           'echo stdout > /dev/stdout',
           puts_output: :never)
       end.to not_output.to_stdout
-          .and(output(/WARNING/).to_stderr)
+          .and(not_output.to_stderr)
     end
   end
 end
