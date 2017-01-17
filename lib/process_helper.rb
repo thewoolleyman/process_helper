@@ -1,5 +1,6 @@
 require 'open3'
 require 'pty'
+require 'timeout'
 
 # Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
 module ProcessHelper
