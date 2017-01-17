@@ -2,7 +2,8 @@
 
 Gem::Specification.new do |spec|
   spec.name = 'process_helper'
-  spec.version = '0.0.4'
+  # Don't forget to keep version in sync with ProcessHelper::Version
+  spec.version = '0.0.4-beta'
   spec.authors = ['Glenn Oppegard', 'Chad Woolley']
   spec.email = ['oppegard@gmail.com', 'thewoolleyman@gmail.com']
   spec.summary = "Makes it easier to spawn ruby sub-processes with proper capturing /

@@ -3,6 +3,9 @@ require 'pty'
 
 # Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
 module ProcessHelper
+  # Don't forget to keep version in sync with gemspec
+  VERSION = '0.0.4-beta'.freeze
+
   def process(cmd, options = {})
     cmd = cmd.to_s
     fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
