@@ -7,12 +7,13 @@ Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling, 
 ## Goals
 
 * Always raise an exception on unexpected exit status (i.e. return code or `$!`)
-* Combine and interleave STDOUT and STDERR streams into STDOUT (using [Open3.popen2e](http://ruby-doc.org/stdlib-2.1.5/libdoc/open3/rdoc/Open3.html#method-c-popen2e)),
+* Combine and interleave STDOUT and STDERR streams into STDOUT (using [Open3.popen2e](http://ruby-doc.org/stdlib-2.1.5/libdoc/open3/rdoc/Open3.html#method-c-popen2e))
+  or [PTY.spawn](https://ruby-doc.org/stdlib-2.2.3/libdoc/pty/rdoc/PTY.html#method-c-spawn),
   so you don't have to worry about how to capture the output of both streams.
 * Provide useful options for suppressing output and including output when an exception
   is raised due to an unexpected exit status
 * Provide real-time streaming of combined STDOUT/STDERR streams in addition to returning full combined output as a string returned from the method and/or in the exception.  
-* Support passing multi-line input to the STDIN stream via arrays of strings.
+* Support passing input to the STDIN stream via string or StringIO.
 * Allow override of the expected exit status(es) (zero is expected by default)
 * Provide short forms of all options for terse, concise usage.
 
@@ -24,7 +25,8 @@ Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling, 
 
 ## Why Yet Another Ruby Process Wrapper Library?
 
-There's many other libraries to make it easier to work with processes in Ruby (see the Resources section).  However, `process_helper` was created because none of them made it *easy* to run processes while meeting **all** of these requirements (redundant details are repeated above in Goals section):
+There's many other libraries to make it easier to work with processes in Ruby (see the Resources section).
+However, `process_helper` was created because none of them made it *easy* to run processes while meeting **all** of these requirements (redundant details are repeated above in Goals section):
 
 * Combine STDOUT/STDERR output streams ***interleaved chronologically as emitted***
 * Stream STDOUT/STDERR real-time ***while process is still running***, in addition to returning full output as a string and/or in an exception
@@ -42,6 +44,8 @@ There's many other libraries to make it easier to work with processes in Ruby (s
 * [Options](#options)
   * [`:expected_exit_status` (short form `:exp_st`)](#expected_exit_status-short-form-exp_st)
   * [`:include_output_in_exception` (short form `:out_ex`)](#include_output_in_exception-short-form-out_ex)
+  * [`:input` (short form `:in`)](#input-short-form-in)
+  * [`:pseudo_terminal` (short form `:pty`)](#pseudo_terminal-short-form-pty)
   * [`:puts_output` (short form `:out`)](#puts_output-short-form-out)
   * [`:timeout` (short form `:kill`)](#timeout-short-form-kill)
 * [Warnings if failure output will be suppressed based on options](#warnings-if-failure-output-will-be-suppressed-based-on-options)  
@@ -149,6 +153,36 @@ ProcessHelper::UnexpectedExitStatusError: Command failed, pid 64947 exit 1. Comm
 "
 ```
 
+### `:input` (short form `:in`)
+
+A String or StringIO object which will be supplied as standard input to the command.
+
+The entire string will be read and piped to the command prior to outputting any output,
+but this behavior may be changed in the future to allow a separator character for
+processing input as "lines".
+
+### `:pseudo_terminal` (short form `:pty`)
+
+Valid values are `true` and `false`.  Default value is `false`.
+
+When this option is `true`, it will cause the command to be processed via 
+[PTY.spawn](https://ruby-doc.org/stdlib-2.2.3/libdoc/pty/rdoc/PTY.html#method-c-spawn)
+in a pseudo-terminal.
+
+Some commands require a terminal, or "tty" to work properly, or to work at all.
+For example, some commands may not emit colored output unless they
+detect that they are running via a terminal.
+
+It is important to note that this can change the behavior of a command.
+ 
+For example, in most default Linux and OSX (BSD) terminals, newlines (`\n`) in output
+will be translated to carriage-return + newline (`\r\n`).  This will normally
+have no effect, and can be controlled by the `onlcr (-onlcr)` option
+of the [stty command](https://www.freebsd.org/cgi/man.cgi?query=stty&sektion=1).
+Use `stty -a` to get info on the current terminal.
+ 
+Also, any input given to the command may be echoed to the output as well. 
+
 ### `:puts_output` (short form `:out`)
 
 Valid values are `:always`, `:error`, and `:never`.  Default value is `:always`.
@@ -160,18 +194,19 @@ Valid values are `:always`, `:error`, and `:never`.  Default value is `:always`.
 
 ### `:timeout` (short form `:kill`)
 
-***WARNING! This option is beta and will be changed in a future release!***
+***NOTE: This option will be changed in a future release.***
 
 Valid value is a float, e.g. `1.5`.  Default value is nil/undefined.
 
-* Currently controls how long `process_helper` will wait to read from
-  a blocked IO stream before timing out (via [IO.select](http://ruby-doc.org/core-2.2.0/IO.html#method-c-select)).  For example, invoking `cat` with no arguments, which by default will continue accepting input until killed.
+* Controls how long `process_helper` will wait to read from
+  a blocked IO stream before timing out (via [IO.select](http://ruby-doc.org/core-2.2.0/IO.html#method-c-select)).
+  For example, invoking `cat` with no arguments, which by default will continue accepting input until killed.
+* Will also kill long running processes which are ***not*** in blocked waiting on an IO stream read (i.e. kill process regardless of any IO state, not just via [IO.selects](http://ruby-doc.org/core-2.2.0/IO.html#method-c-select) timeout support).
 * If undefined (default), there will be no timeout, and `process_helper` will hang if a process hangs while waiting to read from IO.
 
 ***The following changes are planned for this option:***
 
 * Add validation of value (enforced to be a float).
-* Add ability for the timeout value to also kill long running processes which are ***not*** in blocked waiting on an IO stream read (i.e. kill process regardless of any IO state, not just via [IO.selects](http://ruby-doc.org/core-2.2.0/IO.html#method-c-select) timeout support).
 * Have both types of timeouts raise different and unique exception classes.
 * Possibly have different option names to allow different timeout values for the two types of timeouts.
 
@@ -220,7 +255,7 @@ ProcessHelper::VERSION
 
 ## Resources
 
-Other Ruby Process tools/libraries
+Other Ruby Process tools/libraries:
 
 * a [comprehensive StackOverflow article](http://stackoverflow.com/questions/7212573/when-to-use-each-method-of-launching-a-subprocess-in-ruby) describing, in detail, the myriad methods of launching Ruby subprocesses.
 * [open4](https://github.com/ahoward/open4) - a solid and useful library - the main thing I missed in it was easily combining real-time streaming interleaved STDOUT/STDERR streams
@@ -229,6 +264,10 @@ Other Ruby Process tools/libraries
   * [https://devver.wordpress.com/2009/06/30/a-dozen-or-so-ways-to-start-sub-processes-in-ruby-part-1/](https://devver.wordpress.com/2009/06/30/a-dozen-or-so-ways-to-start-sub-processes-in-ruby-part-1/)
   * [https://devver.wordpress.com/2009/07/13/a-dozen-or-so-ways-to-start-sub-processes-in-ruby-part-2/](https://devver.wordpress.com/2009/07/13/a-dozen-or-so-ways-to-start-sub-processes-in-ruby-part-2/)
   * [https://devver.wordpress.com/2009/10/12/ruby-subprocesses-part_3/](https://devver.wordpress.com/2009/10/12/ruby-subprocesses-part_3/)
+* [A gist exploring ruby PTY behavior](https://gist.github.com/thewoolleyman/6a060574f22eafd42955812a1a2a7842#file-pty_check_test-rb)
 
+Some notes on why you should use printf over echo:
 
+* [echo vs. println](http://unix.stackexchange.com/a/219274)
+* [Why is printf better than echo?](http://unix.stackexchange.com/questions/65803/why-is-printf-better-than-echo/65819#65819)
 
