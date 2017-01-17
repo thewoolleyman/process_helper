@@ -2,9 +2,7 @@
 
 # process_helper
 
-Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling,
-capturing of combined STDOUT and STDERR streams, providing STDIN input, timeouts,
-and running via a pseudo terminal.
+Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling, capturing of combined STDOUT and STDERR streams, providing STDIN input, timeouts, and running via a pseudo terminal.
 
 ## Goals
 
@@ -16,6 +14,7 @@ and running via a pseudo terminal.
   is raised due to an unexpected exit status
 * Provide real-time streaming of combined STDOUT/STDERR streams in addition to returning full combined output as a string returned from the method and/or in the exception.  
 * Support passing input to the STDIN stream via string or StringIO.
+* Support running commands in a pseudo terminal.
 * Allow override of the expected exit status(es) (zero is expected by default)
 * Provide short forms of all options for terse, concise usage.
 
