@@ -7,6 +7,9 @@ module ProcessHelper
   # Don't forget to keep version in sync with gemspec
   VERSION = '0.0.4.pre.beta.1'.freeze
 
+  # rubocop:disable Style/ModuleFunction
+  extend self
+
   def process(cmd, options = {})
     cmd = cmd.to_s
     fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
