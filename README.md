@@ -2,7 +2,7 @@
 
 # process_helper
 
-Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling, capturing of combined STDOUT and STDERR streams, providing STDIN input, timeouts, and running via a pseudo terminal.
+Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling, capturing and/or suppressing combined STDOUT and STDERR streams, providing STDIN input, timeouts, and running via a pseudo terminal.
 
 ## Goals
 
