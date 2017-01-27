@@ -49,6 +49,7 @@ However, `process_helper` was created because none of them made it *easy* to run
   * [`:pseudo_terminal` (short form `:pty`)](#pseudo_terminal-short-form-pty)
   * [`:puts_output` (short form `:out`)](#puts_output-short-form-out)
   * [`:timeout` (short form `:kill`)](#timeout-short-form-kill)
+  * [`:trace` (short form `:t`)](#trace-short-form-t)
 * [Warnings if failure output will be suppressed based on options](#warnings-if-failure-output-will-be-suppressed-based-on-options)  
 * [Version](#version)
 * [Contributing](#contributing)
@@ -213,6 +214,14 @@ Valid value is a float, e.g. `1.5`.  Default value is nil/undefined.
 
 See [https://www.pivotaltracker.com/story/show/93303096](https://www.pivotaltracker.com/story/show/93303096) for more details.
 
+### `:trace` (short form `:t`)
+
+Valid value is a boolean.  Default value is false.
+
+* Prints command to STDOUT before it is executed.
+* This is useful to have a "log" to know what commands are executing,
+  especially when using `puts_output: :error` or `puts_output: :never`,
+  and when the command might not finish immediately.
 
 
 ## Warnings if failure output will be suppressed based on options

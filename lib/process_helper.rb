@@ -16,6 +16,7 @@ module ProcessHelper
     fail ProcessHelper::EmptyCommandError, 'command must not be empty' if cmd.empty?
     options = options.dup
     options_processing(options)
+    puts cmd if options[:trace]
     output, process_status =
       if options[:pseudo_terminal]
         process_with_pseudo_terminal(cmd, options)
@@ -175,6 +176,7 @@ module ProcessHelper
     options[:pseudo_terminal] = false if options[:pseudo_terminal].nil?
     options[:expected_exit_status] = [0] if options[:expected_exit_status].nil?
     options[:input] = StringIO.new(options[:input].to_s) unless options[:input].is_a?(StringIO)
+    options[:trace] = false if options[:trace].nil?
   end
 
   def valid_option_pairs
@@ -185,6 +187,7 @@ module ProcessHelper
       %w(pseudo_terminal pty),
       %w(puts_output out),
       %w(timeout kill),
+      %w(trace t),
     ]
     pairs.each do |pair|
       pair.each_with_index do |opt, index|
@@ -230,6 +233,7 @@ module ProcessHelper
         validate_boolean(pair, value) if option.to_s == 'include_output_in_exception'
         validate_boolean(pair, value) if option.to_s == 'pseudo_terminal'
         validate_puts_output(pair, value) if option.to_s == 'puts_output'
+        validate_boolean(pair, value) if option.to_s == 'trace'
       end
     end
   end
