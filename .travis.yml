@@ -3,5 +3,8 @@ sudo: false
 addons:
     code_climate:
         repo_token: e7445c267f016d1a041c9cd16889fa806714e9a7c9bc1fc7936465442b9a167b
+before_install:
+  - gem update --remote bundler
+  - gem update --system
 after_success:
   - bundle exec codeclimate-test-reporter
