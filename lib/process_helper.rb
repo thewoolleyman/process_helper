@@ -3,7 +3,12 @@ require 'pty'
 require 'timeout'
 require 'stringio'
 
-# Makes it easier to spawn ruby sub-processes with proper capturing of stdout and stderr streams.
+# Makes it easy to spawn Ruby sub-processes with guaranteed exit status handling,
+# capturing and/or suppressing combined STDOUT and STDERR streams,
+# providing STDIN input, timeouts, and running via a pseudo terminal.
+#
+# Full documentation at https://github.com/thewoolleyman/process_helper
+
 module ProcessHelper
   # Don't forget to keep version in sync with gemspec
   VERSION = '0.0.4.pre.beta.4'.freeze
