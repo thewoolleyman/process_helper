@@ -103,6 +103,10 @@ module ProcessHelper
         result = IO.select(nil, [stdin], nil, timeout)
         raise Timeout::Error if result.nil?
         retry
+      rescue Errno::EIO
+        # GNU/Linux raises EIO on read operation when pty slave is closed - see pty.rb docs
+        return output if options[:pseudo_terminal]
+        raise
       end
     rescue Timeout::Error
       handle_timeout_error(output, options)
