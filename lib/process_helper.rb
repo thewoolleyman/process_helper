@@ -10,7 +10,7 @@ require 'stringio'
 # Full documentation at https://github.com/thewoolleyman/process_helper
 module ProcessHelper
   # Don't forget to keep version in sync with gemspec
-  VERSION = '0.1.0'.freeze
+  VERSION = '0.1.1.pre.beta.1'.freeze
 
   # rubocop:disable Style/ModuleFunction
   extend self
