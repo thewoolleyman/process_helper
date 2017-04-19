@@ -4,7 +4,6 @@ RSpec.describe 'pty handling' do
   attr_reader :clazz, :max_process_wait
 
   before do
-    skip('pty specs do not work on travis or circle ci (try docker with -t option)') if ENV['CI']
     @clazz = Clazz.new
   end
 
@@ -31,6 +30,15 @@ RSpec.describe 'pty handling' do
         pty: true
       )
     end.to output("stdout\nstderr\n").to_stdout
+      .and(not_output.to_stderr)
+  end
+
+  it 'handles linux behavior of raising Errno::EIO when pty slave is closed' do
+    # nothing really special about this test, all the specs in this file
+    # fail on linux, just documenting...
+    expect do
+      clazz.process('echo "hi" && exit 1', pty: true, exp_st: 1)
+    end.to output(/hi/).to_stdout
       .and(not_output.to_stderr)
   end
 
