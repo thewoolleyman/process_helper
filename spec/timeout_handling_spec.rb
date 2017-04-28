@@ -22,6 +22,19 @@ RSpec.describe 'timout handling with non-exiting blocking cmd requiring timeout'
     )
   end
 
+  it 'raises on sleep with a PTY' do
+    expect do
+      clazz.process(
+        'sleep 999',
+        timeout: max_process_wait,
+        pty: true
+      )
+    end.to raise_error(
+      ProcessHelper::TimeoutError,
+      "Timed out after #{@max_process_wait} seconds. Command output prior to timeout: \"\""
+    )
+  end
+
   it 'does not raise error if timeout is not exceeded' do
     expect do
       clazz.process(
