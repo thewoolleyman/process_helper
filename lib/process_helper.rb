@@ -48,11 +48,20 @@ module ProcessHelper
   end
 
   def process_with_pseudo_terminal(cmd, options)
+    max_seconds_to_wait_for_pid_to_exit = options[:timeout] || 60
     PTY.spawn(cmd) do |stdout_and_stderr, stdin, pid|
       output = get_output(stdin, stdout_and_stderr, options)
-      process_status = PTY.check(pid)
-      # TODO: come up with a test that illustrates pid not exiting
-      fail "ERROR: pid #{pid} did not exit" unless process_status
+      # TODO: come up with a test that illustrates pid not exiting by the time PTY exits
+      process_status = nil
+      begin
+        Timeout.timeout(max_seconds_to_wait_for_pid_to_exit) do
+          process_status = PTY.check(pid) until process_status
+          sleep 0.1 unless process_status
+        end
+      rescue Timeout::Error
+        additional_msg = "Pid #{pid} did not exit after its pseudo-terminal (PTY) returned."
+        handle_timeout_error(output, options, max_seconds_to_wait_for_pid_to_exit, additional_msg)
+      end
       return [output, process_status]
     end
   end
@@ -119,8 +128,9 @@ module ProcessHelper
     output
   end
 
-  def handle_timeout_error(output, options)
-    msg = "Timed out after #{options.fetch(:timeout)} seconds."
+  def handle_timeout_error(output, options, seconds = nil, additional_msg = nil)
+    msg = "Timed out after #{options.fetch(:timeout, seconds)} seconds."
+    msg += " #{additional_msg}" if additional_msg
     if options[:include_output_in_exception]
       msg += " Command output prior to timeout: \"#{output}\""
     end

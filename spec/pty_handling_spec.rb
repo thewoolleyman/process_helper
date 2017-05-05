@@ -34,12 +34,21 @@ RSpec.describe 'pty handling' do
   end
 
   it 'handles linux behavior of raising Errno::EIO when pty slave is closed' do
-    # nothing really special about this test, all the specs in this file
-    # fail on linux, just documenting...
     expect do
       clazz.process('echo "hi" && exit 1', pty: true, exp_st: 1)
     end.to output(/hi/).to_stdout
       .and(not_output.to_stderr)
+  end
+
+  it 'can timeout if process does not exit when pty ends' do
+    @max_process_wait = 0.2
+    allow(PTY).to receive(:check).and_return(nil)
+    expect do
+      clazz.process('echo', pty: true, exp_st: 1, timeout: @max_process_wait)
+    end.to raise_error(
+      ProcessHelper::TimeoutError,
+      /Timed out after #{@max_process_wait} seconds..*did not exit.*PTY.*/
+    )
   end
 
   it 'does not require a newline or flush via getch' do
