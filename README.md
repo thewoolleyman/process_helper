@@ -183,7 +183,13 @@ have no effect, and can be controlled by the `onlcr (-onlcr)` option
 of the [stty command](https://www.freebsd.org/cgi/man.cgi?query=stty&sektion=1).
 Use `stty -a` to get info on the current terminal.
  
-Also, any input given to the command may be echoed to the output as well. 
+Also, any input given to the command may be echoed to the output as well.
+
+In some cases, the PTY will exit and return, even though the child process PID
+for which it was spawned is still running.  In this case, process_helper
+will wait for the the child PID to exit.  If it does not exit after
+the specified [`:timeout`](#timeout-short-form-kill), or by default
+60 seconds if `:timeout` is unspecified, an exception will be raised.
 
 ### `:puts_output` (short form `:out`)
 
@@ -205,6 +211,8 @@ Valid value is a float, e.g. `1.5`.  Default value is nil/undefined.
   For example, invoking `cat` with no arguments, which by default will continue accepting input until killed.
 * Will also kill long running processes which are ***not*** in blocked waiting on an IO stream read (i.e. kill process regardless of any IO state, not just via [IO.selects](http://ruby-doc.org/core-2.2.0/IO.html#method-c-select) timeout support).
 * If undefined (default), there will be no timeout, and `process_helper` will hang if a process hangs while waiting to read from IO.
+* This option will also override how long a [`:pseudo_terminal`](#pseudo_terminal-short-form-pty)
+  will wait for a child PID to exit after the terminal has already exited.
 
 ***The following changes are planned for this option:***
 
