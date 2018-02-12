@@ -51,6 +51,7 @@ However, `process_helper` was created because none of them made it *easy* to run
   * [`:timeout` (short form `:kill`)](#timeout-short-form-kill)
   * [`:log_cmd` (short form `:log`)](#log_cmd-short-form-log)
 * [Warnings if failure output will be suppressed based on options](#warnings-if-failure-output-will-be-suppressed-based-on-options)  
+* [Example Helper Script](#example-helper-script)
 * [Version](#version)
 * [Contributing](#contributing)
 * [(Un)License](#unlicense)
@@ -247,6 +248,31 @@ place the output will be seen is in the return value of the `ProcessHelper#proce
 WARNING: Check your ProcessHelper options - :puts_output is :never, and :include_output_in_exception is false, so all error output will be suppressed if process fails.
  => "ls: /does_not_exist: No such file or directory\n"
  ```
+
+## Example Helper Script
+
+You can DRY up your usage of common process helper options by making a helper script like this that you can require:
+
+`setup_process_helper.rb`
+```
+require 'process_helper'
+include ProcessHelper
+
+def process_without_output(cmd, options = {})
+  process(cmd, {out: :error, include_output_in_exception: false}.merge(default_options_for_process_helper).merge(options))
+end
+
+def process_with_output(cmd, options = {})
+  process(cmd, default_options_for_process_helper.merge(options))
+end
+
+def default_options_for_process_helper
+  # IMPORTANT NOTE: Running under a pseudo-terminal (pty) gives coloring and other
+  # benefits, but will result in end-of-line being "\r\n" instead of just "\n".
+  # Be aware of this if attempting to split return value into lines.
+  {log: true, pty: true}
+end
+```
 
 ## Version
 
