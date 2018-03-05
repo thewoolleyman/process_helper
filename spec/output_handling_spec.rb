@@ -34,6 +34,15 @@ RSpec.describe 'output handling' do
         .and(not_output.to_stderr)
   end
 
+  it 'escapes non-format % characters' do
+    expect do
+      clazz.process(
+        'echo %',
+        puts_output: :always)
+    end.to output("%\n").to_stdout
+      .and(not_output.to_stderr)
+  end
+
   describe 'when :puts_output == :never' do
     describe 'when include_output_in_exception is false' do
       it 'show warning' do

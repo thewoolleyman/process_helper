@@ -98,7 +98,7 @@ module ProcessHelper
             ch = stdout_and_stderr.read_nonblock(1)
           end
           break unless ch
-          printf ch if always_puts_output
+          printf format_char(ch) if always_puts_output
           output += ch
           stdout_and_stderr.flush
         end
@@ -126,6 +126,10 @@ module ProcessHelper
     # TODO: Why do we sometimes get here with no EOFError occurring, but instead
     # via IO::WaitReadable with a nil select result? (via popen, not sure if via tty)
     output
+  end
+
+  def format_char(ch)
+    ch == '%' ? '%%' : ch
   end
 
   def handle_timeout_error(output, options, seconds = nil, additional_msg = nil)
