@@ -21,7 +21,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bundler', '~> 1.6'
   spec.add_development_dependency 'codeclimate-test-reporter', '~> 1'
   spec.add_development_dependency 'rake', '~> 10'
-  spec.add_development_dependency 'rainbow', '~> 2.1.0' # workaround for https://github.com/sickill/rainbow/issues/48#issuecomment-275454921, gem update --system no longer works
   spec.add_development_dependency 'rspec', '~> 3.1'
   spec.add_development_dependency 'rspec-retry', '~> 0.4'
   spec.add_development_dependency 'rubocop', '= 0.38.0' # exact version for static analyis libs
