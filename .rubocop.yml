@@ -11,6 +11,7 @@ AllCops:
     - 'client/node_modules/**/*'
     - 'db/**/*'
     - 'vendor/bundle/**/*'
+    - 'bin/**/*'
 
 Metrics/LineLength:
   Max: 99
