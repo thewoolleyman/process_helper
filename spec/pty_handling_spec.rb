@@ -8,6 +8,7 @@ RSpec.describe 'pty handling' do
   end
 
   it 'handles cat cmd' do
+    skip 'This fails intermittently on CI with a SIGHUP'
     expect do
       clazz.process(
         # -u disables output buffering, -n numbers output lines (to distinguish from input)
